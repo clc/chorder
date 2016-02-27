@@ -1,8 +1,11 @@
 /*
  * Arduino code for a Bluetooth version of the Chorder.
  * @author: clc@clcworld.net
- * some additional code by: priestdo@budgardr.org
+ * additional code by: priestdo@budgardr.org
  * This version tested on/with the Adafruit Feather 32u4 Bluefruit LE
+ *
+ * It is a new arduino based chorder inspired by the SpiffChorder 
+ * which can be found at http://symlink.dk/projects/spiffchorder/ 
  */
 
 #include <Arduino.h>
