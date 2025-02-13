@@ -1,5 +1,8 @@
 // KeyCodes.h
-// split out from main code for FeatherChorder.ino
+// Split out from main code for FeatherChorder.ino
+// If using the feather 32u4 bluefruit then see
+// https://learn.adafruit.com/adafruit-feather-32u4-bluefruit-le/ble-services
+// for all posible codes (in case something has been added).
 // - Greg
 
 /*****************************************
@@ -166,6 +169,10 @@ enum keycodes {
   ANDROID_menu,         // aka, CTRL|KEY_esc
   ANDROID_back,         // aka, KEY_esc with NO MODS
   ANDROID_dpadcenter,   // aka, KEY_KP5 with NO MODS
+
+  /* Some new macros for a few BT functions */
+  BAT_LVL,  // print the batter level of the  LiPo
+  FACT_RESET, // do a factory reset (clearing  all BT  paring info)
   DIV_Last
 };
 
