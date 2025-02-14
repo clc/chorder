@@ -20,8 +20,9 @@
  * - Added Battery Voltage macro that returns the current voltage of the LiPo by
  *   printing that as keyboard output. (Not to serial console)
  * - Have not impimented key repeat yet.
+ * - Added printed comment to device when doing a factory reset.
  * 
- * Last mucked with on: $Date: 2025/02/13 20:18:00 $
+ * Last mucked with on: 2025/02/14 21:18 UTC
  */
 
 #include <Arduino.h>
@@ -567,6 +568,7 @@ sendString(  "volts. " );
 void sendFactoryReset(){
   // Perform a factory reset to make sure everything is in a known state 
     if ( VERBOSE_MODE ) Serial.println(F("Performing a factory reset: "));
+    sendString( " Performing Factory Reset, You will need to pair the device after..."); 
     if ( ! ble.factoryReset() ){
       error(F("Factory reset failed!"));
     }
