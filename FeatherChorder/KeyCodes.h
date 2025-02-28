@@ -153,7 +153,7 @@ enum keycodes {
 
 /* And finally macros, that generate multiple key presses */
   DIV_Macro,
-  MACRO_000=DIV_Macro,  // 000
+  MACRO_000,  // 000
   MACRO_00,             // 00
   MACRO_quotes,         // "" and left arrow
   MACRO_parens,         // () and left arrow
@@ -185,4 +185,5 @@ enum keycodes {
   DIV_Last
 };
 
+const int RAW_LGUI = 0xE3;
 // end of KeyCodes.h

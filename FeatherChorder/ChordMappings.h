@@ -32,6 +32,7 @@ const keymap_t keymap_default[128] = {
   ENUMKEY_T,                        // --- IMRP  0x0F
 
   MODE_NUM,                         // --N ----  0x10
+
   MODE_FUNC,                        // --N ---P  0x11
   ENUMKEY_esc,                      // --N --R-  0x12
   ENUMKEY_smcol,                    // --N --RP  0x13
@@ -40,7 +41,7 @@ const keymap_t keymap_default[128] = {
   ENUMKEY_dot,                      // --N -MR-  0x16
   MOD_LALT,                         // --N -MRP  0x17
 
-  ENUMKEY__,                        // --N I---  0x18
+  RAW_LGUI,                        // --N I---  0x18
   ENUMKEY_ins,                      // --N I--P  0x19
   MOD_LGUI,                         // --N I-R-  0x1A
   MOD_LCTRL,                        // --N I-RP  0x1B

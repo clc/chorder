@@ -323,9 +323,6 @@ void sendKey(byte keyState){
     return;
 		// back to common code		
 // Handle mode locks
-	case ENUMKEY_cpslck:
-				sendRawKey(0x00, ENUMKEY_cpslck);
-				return;
   case MODE_NUMLCK:
     if (isNumsymLocked){
       isNumsymLocked = false;
