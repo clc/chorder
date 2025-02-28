@@ -18,7 +18,7 @@ const keymap_t keymap_default[128] = {
   ENUMKEY_Y,                        // --- --R-  0x02
   ENUMKEY_U,                        // --- --RP  0x03
   ENUMKEY_R,                        // --- -M--  0x04
-  MACRO_openparen,                  // --- -M-P  0x05
+  MACRO_1,                          // --- -M-P  0x05
   ENUMKEY_H,                        // --- -MR-  0x06
   ENUMKEY_S,                        // --- -MRP  0x07
 
@@ -27,7 +27,7 @@ const keymap_t keymap_default[128] = {
   ENUMKEY_K,                        // --- I-R-  0x0A
   ENUMKEY_Z,                        // --- I-RP  0x0B
   ENUMKEY_D,                        // --- IM--  0x0C
-  MACRO_closeparen,                 // --- IM-P  0x0D
+  MACRO_2,                          // --- IM-P  0x0D
   ENUMKEY_E,                        // --- IMR-  0x0E
   ENUMKEY_T,                        // --- IMRP  0x0F
 
@@ -54,7 +54,7 @@ const keymap_t keymap_default[128] = {
   ENUMKEY_G,                        // -C- --R-  0x22
   ENUMKEY_V,                        // -C- --RP  0x23
   ENUMKEY_C,                        // -C- -M--  0x24
-  ENUMKEY_rbr,                      // -C- -M-P  0x25
+  MACRO_3,                          // -C- -M-P  0x25
   ENUMKEY_P,                        // -C- -MR-  0x26
   ENUMKEY_N,                        // -C- -MRP  0x27
 
@@ -63,7 +63,7 @@ const keymap_t keymap_default[128] = {
   ENUMKEY_J,                        // -C- I-R-  0x2A
   ENUMKEY_Q,                        // -C- I-RP  0x2B
   ENUMKEY_M,                        // -C- IM--  0x2C
-  ENUMKEY_lbr,                      // -C- IM-P  0x2D
+  MACRO_4,                          // -C- IM-P  0x2D
   ENUMKEY_A,                        // -C- IMR-  0x2E
   ENUMKEY_O,                        // -C- IMRP  0x2F
 
@@ -104,7 +104,7 @@ const keymap_t keymap_default[128] = {
   ENUMKEY_cpslck,                   // F-- IMRP  0x4F
 
   ENUMKEY_break,                    // F-N ----  0x50
-  ENUMKEY__,                        // F-N ---P  0x51
+  MACRO_SHIFTDN,                    // F-N ---P  0x51
   ENUMKEY__,                        // F-N --R-  0x52
   ENUMKEY__,                        // F-N --RP  0x53
   ENUMKEY__,                        // F-N -M--  0x54
@@ -139,7 +139,7 @@ const keymap_t keymap_default[128] = {
   MEDIA_previous, // was ENUMKEY_KP9,         // FC- IMR-  0x6E
   ENUMKEY_KP0,                      // FC- IMRP  0x6F
 
-  MODE_MRESET,                      // FCN ----  0x70
+  MODE_RESET,                       // FCN ----  0x70
   ENUMKEY__,                        // FCN ---P  0x71
   ENUMKEY__,                        // FCN --R-  0x72
   ENUMKEY__,                        // FCN --RP  0x73
@@ -148,7 +148,7 @@ const keymap_t keymap_default[128] = {
   ENUMKEY__,                        // FCN -MR-  0x76
   ENUMKEY__,                        // FCN -MRP  0x77
 
-  ENUMKEY__,                        // FCN I---  0x78
+  MODE_FRESET,                      // FCN I---  0x78
   ENUMKEY__,                        // FCN I--P  0x79
   ENUMKEY__,                        // FCN I-R-  0x7A
   ENUMKEY__,                        // FCN I-RP  0x7B
@@ -288,7 +288,7 @@ const keymap_t keymap_numsym[128] = {
   ENUMKEY_KP9,                      // FC- IMR-  0x6E
   ENUMKEY_KP0,                      // FC- IMRP  0x6F
 
-  MODE_RESET,                      // FCN ----  0x70
+  MODE_RESET,                       // FCN ----  0x70
   ENUMKEY__,                        // FCN ---P  0x71
   ENUMKEY__,                        // FCN --R-  0x72
   ENUMKEY__,                        // FCN --RP  0x73
@@ -317,16 +317,16 @@ const keymap_t keymap_function[128] = {
   MEDIA_volup,                      // --- --RP  0x03
   ENUMKEY_F3,                       // --- -M--  0x04
   ENUMKEY__,                        // --- -M-P  0x05
-  ENUMKEY__,                        // --- -MR-  0x06
+  MACRO_TEST,                       // --- -MR-  0x06
   MEDIA_stop,                       // --- -MRP  0x07
 
   ENUMKEY_F2,                       // --- I---  0x08
   MEDIA_previous,                   // --- I--P  0x09
   ENUMKEY__,                        // --- I-R-  0x0A
-  BAT_LVL,                             // --- I-RP  0x0B
+  ENUMKEY__,                        // --- I-RP  0x0B
   MEDIA_voldn,                      // --- IM--  0x0C
   ENUMKEY__,                        // --- IM-P  0x0D
-  ENUMKEY__,                        // --- IMR-  0x0E
+  BAT_LVL,                          // --- IMR-  0x0E
   ENUMKEY__,                        // --- IMRP  0x0F
 
   ENUMKEY__,                        // --N ----  0x10
@@ -437,7 +437,7 @@ const keymap_t keymap_function[128] = {
   ENUMKEY__,                        // FC- IMR-  0x6E
   ENUMKEY__,                        // FC- IMRP  0x6F
 
-  FACT_RESET,                       // FCN ----  0x70
+  MODE_RESET,                       // FCN ----  0x70
   ENUMKEY__,                        // FCN ---P  0x71
   ENUMKEY__,                        // FCN --R-  0x72
   ENUMKEY__,                        // FCN --RP  0x73

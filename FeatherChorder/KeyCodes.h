@@ -22,7 +22,7 @@ enum keycodes {
   ENUMKEY_E,
   ENUMKEY_F,
   ENUMKEY_G,
-  ENUMKEY_H,
+  ENUMKEY_H, 
   ENUMKEY_I,
   ENUMKEY_J,
   ENUMKEY_K,
@@ -117,7 +117,7 @@ enum keycodes {
    handeled specially in decoding and mapped to the modifier byte in
    the USB report */
   DIV_Mods,
-  MOD_LCTRL=DIV_Mods,   // 0x01
+  MOD_LCTRL,            // 0x01 ? removed '=DIV_Mods' that I think was in error
   MOD_LSHIFT,           // 0x02
   MOD_LALT,             // 0x04
   MOD_LGUI,             // 0x08
@@ -128,13 +128,16 @@ enum keycodes {
 
 /* Next comes the mode change codes */
   DIV_Modes,
-  MODE_RESET=DIV_Modes, // Reset (Default mode)
+  MODE_RESET, // Reset (Default mode)  ? removed '=DIV_Mods'
   MODE_MRESET,          // Master Reset and ID
+  MODE_FRESET,          // do a factory reset - For BLE Feather this clears
+                        // all BT  paring info). Should be on something hard
+                        // to reach.
   MODE_NUM,             // Number/symbols mode
   MODE_NUMLCK,          // Number/symbols lock
   MODE_FUNC,            // Function key mode
   MODE_FUNCLCK,         // Function key lock
-
+  
 /* Then a special mode for both num/sym and shift */
   DIV_Multi,
   MULTI_NumShift=DIV_Multi,
@@ -170,11 +173,16 @@ enum keycodes {
   ANDROID_back,         // aka, KEY_esc with NO MODS
   ANDROID_dpadcenter,   // aka, KEY_KP5 with NO MODS
 
+  /* Trying some multi-key macros on the 4 unused keys */
+  MACRO_1,
+  MACRO_2,
+  MACRO_3,
+  MACRO_4,
+  MACRO_TEST,           // a - h to test interstitial delay
+  MACRO_SHIFTDN,        // try for shift down
   /* Some new macros for a few BT functions */
   BAT_LVL,  // print the batter level of the  LiPo
-  FACT_RESET, // do a factory reset (clearing  all BT  paring info)
   DIV_Last
 };
-
 
 // end of KeyCodes.h

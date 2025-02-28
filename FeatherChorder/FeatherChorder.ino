@@ -1,4 +1,4 @@
-/*
+ /*
  * Arduino code for a Bluetooth version of the Chorder.
  * @author: clc@clcworld.net
  * additional code by: priestdo@budgardr.org
@@ -21,8 +21,9 @@
  *   printing that as keyboard output. (Not to serial console)
  * - Have not impimented key repeat yet.
  * - Added printed comment to device when doing a factory reset.
- * 
- * Last mucked with on: 2025/02/14 21:18 UTC
+ * - Added 4 macros for the 4 unassigned chords in the default keyset
+ * - Changed caps lock to be handled on the host rather than by the keyboard
+ * Last mucked with on: 2025/02/28 04:09 UTC
  */
 
 #include <Arduino.h>
@@ -143,6 +144,17 @@ static const Button switch_pins[7] = {
   Button(A0),  // Far Thumb
 };
 
+// A few timing constants
+const int HalfSec = 500;  // for a half second delay
+
+// It seems it can happen that there are times when sending 3 raw
+// keys in a macro, the keys can arrive in the wrong order.  So this was added
+// 2025-02-23 to see if it prevents that.  Adjust as needed.
+// A long name for a short thing. The time between raw key sends in a macro  .
+const int InterstitialDelay = 50; // for a 5/100 sec. delay (4/100 was not enough)
+
+// note - key debounce timing constants are not in this section.
+
 //====END=CONSTANTS=====================END=CONSTANTS=============
 
 //=====SETUP============================SETUP====================
@@ -152,7 +164,7 @@ void setup(void)
    pinMode(EnPin, OUTPUT);      // Make pin an output,
    digitalWrite(EnPin, HIGH);  // and activate pullup.
    // while (!Serial);  // Required for Flora & Micro (and usb output)
-  delay(500);
+  delay(HalfSec);
 
   if ( VERBOSE_MODE ) Serial.begin(115200);
   if ( VERBOSE_MODE ) Serial.println(F("Adafruit Bluefruit HID Chorder"));
@@ -236,7 +248,7 @@ enum Mode {
   FUNCTION
 };
 
-bool isCapsLocked = false;
+// bool isCapsLocked = false;
 bool isNumsymLocked = false;
 keymap_t modKeys = 0x00;
 
@@ -247,15 +259,6 @@ byte previousStableReading = 0;
 byte currentStableReading = 0;
 long lastDebounceTime = 0;  // the last time the output pin was toggled
 long debounceDelay = 10;    // the debounce time; increase if the output flickers
-
-//=====send()======================send()==========================
-// ??? where is this used ??? 
-// ??? trying with this commented out as I see no place it is
-// ??? used - GPD 2025-02
-//GPD 
-//GPDvoid send(char* character) {
-//GPD//  Uart.print(character);
-//GPD}
 
 //=====SEND KEY====================SEND KEY========================
 // used by processReading()
@@ -291,19 +294,14 @@ void sendKey(byte keyState){
   case MODE_RESET:
     mode = ALPHA;
     modKeys = 0x00;
-    isCapsLocked = false;
     isNumsymLocked = false;
+    sendRawKeyUp();
     return;
   case MODE_MRESET:
     mode = ALPHA;
     modKeys = 0x00;
-    isCapsLocked = false;
     isNumsymLocked = false;
-//    digitalWrite(EnPin, LOW);  // turn off 3.3v regulator enable.
-//    digitalWrite(EnPin, HIGH);  // turn on 3.3v regulator enable.
-//    sendMouseKey("L,press");  // added for testing
-//    sendString(" -Keyboard State Reset- ");  // added for testing
-//    
+    digitalWrite(EnPin, LOW);  // turn off 3.3v regulator enable.
     return;
  case BAT_LVL:
  // get and send the battedy level, then
@@ -311,22 +309,15 @@ void sendKey(byte keyState){
     gAsBattLvl();
     mode = ALPHA;
     modKeys = 0x00;
-    isCapsLocked = false;
     isNumsymLocked = false;
     return;
- case FACT_RESET:
+ case MODE_FRESET:
     sendFactoryReset();
     return;
 // Handle mode locks
-  case ENUMKEY_cpslck:
-    if (isCapsLocked){
-      isCapsLocked = false;
-      modKeys = 0x00;
-    } else {
-      isCapsLocked = true;
-      modKeys = 0x02;
-    }
-    return;
+	case ENUMKEY_cpslck:
+				sendRawKey(0x00, ENUMKEY_cpslck);
+				return;
   case MODE_NUMLCK:
     if (isNumsymLocked){
       isNumsymLocked = false;
@@ -377,22 +368,26 @@ void sendKey(byte keyState){
 /* Everything after this sends actual keys to the system; break rather than
      return since we want to reset the modifiers after these keys are sent. */
   case MACRO_000:
-    sendRawKey(0x00, 0x27);
-    sendRawKey(0x00, 0x27);
-    sendRawKey(0x00, 0x27);
+	  sendRawKey(0x00, ENUMKEY_0);
+    sendRawKey(0x00, ENUMKEY_0);
+    sendRawKey(0x00, ENUMKEY_0);
     break;
   case MACRO_00:
-    sendRawKey(0x00, 0x27);
-    sendRawKey(0x00, 0x27);
+    sendRawKey(0x00, ENUMKEY_0);
+    sendRawKey(0x00, ENUMKEY_0);
     break;
   case MACRO_quotes:
     sendRawKey(0x02, 0x34);
+    delay(InterstitialDelay);
     sendRawKey(0x02, 0x34);
+    delay(InterstitialDelay);
     sendRawKey(0x00, 0x50);
     break;
   case MACRO_parens:
     sendRawKey(0x02, 0x26);
+    delay(InterstitialDelay);
     sendRawKey(0x02, 0x27);
+    delay(InterstitialDelay);
     sendRawKey(0x00, 0x50);
     break;
   case MACRO_dollar:
@@ -425,7 +420,52 @@ void sendKey(byte keyState){
   case MACRO_closecurly:
     sendRawKey(0x02, 0x30);
     break;
-// Handle Android specific keys
+    case MACRO_1 :
+			// er
+      sendRawKey(modKeys, ENUMKEY_E);
+      delay(InterstitialDelay);
+      sendRawKey(modKeys, ENUMKEY_R);
+      break;
+    case MACRO_2:
+			// th
+      sendRawKey(modKeys, ENUMKEY_T);
+      delay(InterstitialDelay);
+      sendRawKey(modKeys, ENUMKEY_H);
+      break;
+    case MACRO_3:
+			// an
+      sendRawKey(modKeys, ENUMKEY_A);
+      delay(InterstitialDelay);
+      sendRawKey(modKeys, ENUMKEY_N);
+      break;
+    case MACRO_4:
+ 			// in
+      sendRawKey(modKeys, ENUMKEY_I);
+      delay(InterstitialDelay);
+      sendRawKey(modKeys, ENUMKEY_N);
+      break;
+	case MACRO_TEST:
+      sendRawKey (modKeys, ENUMKEY_A);
+      delay(InterstitialDelay);
+      sendRawKey (modKeys, ENUMKEY_B);
+      delay(InterstitialDelay);
+      sendRawKey (modKeys, ENUMKEY_C);
+      delay(InterstitialDelay);
+      sendRawKey (modKeys, ENUMKEY_D);
+      delay(InterstitialDelay);
+      sendRawKey (modKeys, ENUMKEY_E);
+      delay(InterstitialDelay);
+      sendRawKey (modKeys, ENUMKEY_F);
+      delay(InterstitialDelay);
+      sendRawKey (modKeys, ENUMKEY_G);
+      delay(InterstitialDelay);
+      sendRawKey (modKeys, ENUMKEY_H);
+      break;
+   case MACRO_SHIFTDN:
+        modKeys = MOD_LSHIFT;
+   	sendRawKeyDn (MOD_LSHIFT, 0x00);
+	break;
+	// Handle Android specific keys
   case ANDROID_search:
     sendRawKey(0x04, 0x2C);
     break;
@@ -467,11 +507,8 @@ void sendKey(byte keyState){
 
   modKeys = 0x00;
   mode = ALPHA;
-// Reset the modKeys and mode based on locks
-  if (isCapsLocked){
-    modKeys = 0x02;
-  }
-  if (isNumsymLocked){
+// Reset the modKeys and mode based on
+ if (isNumsymLocked){
     mode = NUMSYM;
   }
 }
@@ -536,10 +573,9 @@ void sendString(String StringOut){
 void sendMouseKey(String MouseKey){
     ble.print("AT+BleHidMouseButton=");
     ble.println(MouseKey);
-    delay(500);
+    delay(HalfSec);
     ble.println("AT+BleHidMouseButton=0");
 }
-
 //======SEND CONTROL KEY============SEND CONTROL KEY==================
 // used in sendKey()
 //
