@@ -108,7 +108,7 @@ Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_
 
 //=============================================================
 // a small helper used in setup()
-//
+// ctb
 void error(const __FlashStringHelper*err) {
   if ( VERBOSE_MODE ) Serial.println(err);
   while (1); 
@@ -129,7 +129,9 @@ public:
   }
 };
 //=============================================================
+// board and connectivity specific
 // power regulator enable control pin
+
 const int EnPin =  5;
 
 
@@ -144,6 +146,8 @@ static const Button switch_pins[7] = {
   Button(A0),  // Far Thumb
 };
 
+//==================================================
+// ctb
 // A few timing constants
 const int HalfSec = 500;  // for a half second delay
 
@@ -158,6 +162,7 @@ const int InterstitialDelay = 50; // for a 5/100 sec. delay (4/100 was not enoug
 //====END=CONSTANTS=====================END=CONSTANTS=============
 
 //=====SETUP============================SETUP====================
+// board specific messages
 void setup(void)
 {
   // Ensure software power reset pin in high
@@ -233,6 +238,7 @@ void setup(void)
 }
 
 // used by processReading()
+// ctb
 enum State {
   PRESSING,
   RELEASING,
@@ -242,13 +248,13 @@ State state = RELEASING;
 byte lastKeyState = 0;
 
 // used by sendKey()
+// ctb
 enum Mode {
   ALPHA,
   NUMSYM,
   FUNCTION
 };
 
-// bool isCapsLocked = false;
 bool isNumsymLocked = false;
 keymap_t modKeys = 0x00;
 
@@ -262,7 +268,7 @@ long debounceDelay = 10;    // the debounce time; increase if the output flicker
 
 //=====SEND KEY====================SEND KEY========================
 // used by processReading()
-//
+// ctb
 void sendKey(byte keyState){
   keymap_t theKey;  
   // Determine the key based on the current mode's keymap
@@ -303,6 +309,7 @@ void sendKey(byte keyState){
     isNumsymLocked = false;
     digitalWrite(EnPin, LOW);  // turn off 3.3v regulator enable.
     return;
+// something with a battery only		
  case BAT_LVL:
  // get and send the battedy level, then
  // do a mode_reset
@@ -314,6 +321,7 @@ void sendKey(byte keyState){
  case MODE_FRESET:
     sendFactoryReset();
     return;
+		// back to common code		
 // Handle mode locks
 	case ENUMKEY_cpslck:
 				sendRawKey(0x00, ENUMKEY_cpslck);
@@ -420,7 +428,7 @@ void sendKey(byte keyState){
   case MACRO_closecurly:
     sendRawKey(0x02, 0x30);
     break;
-    case MACRO_1 :
+  case MACRO_1 :
 			// er
       sendRawKey(modKeys, ENUMKEY_E);
       delay(InterstitialDelay);
@@ -444,6 +452,7 @@ void sendKey(byte keyState){
       delay(InterstitialDelay);
       sendRawKey(modKeys, ENUMKEY_N);
       break;
+  // macro test is a long string to confirm length of interstitial delay
 	case MACRO_TEST:
       sendRawKey (modKeys, ENUMKEY_A);
       delay(InterstitialDelay);
@@ -513,9 +522,8 @@ void sendKey(byte keyState){
   }
 }
 
-/* NEW CODE 2025-02 */
-
 //======SEND RAW KEY====================SEND RAW KEY================
+// ctb
 // used in sendKey()
 //
 // new sendRawKey to make sure all is working as expected
@@ -530,6 +538,7 @@ void sendRawKey(char modKey, char rawKey){
 }
 
 //======SEND RAW KEY DOWN===============SEND RAW KEY DOWN============
+// connectivity specific - This is for BT/BLE
 // used in sendRawKey()
 //
 
@@ -553,12 +562,14 @@ void sendRawKeyDn(char modKey, char rawKey){
 }
 
 //======SEND RAW KEY UP==============SEND RAW KEY UP==================
+// connectivity specific - This is for BT/BLE
 // used in sendRawKey()  and sendString()
 //
 void sendRawKeyUp(){
    ble.println("AT+BLEKEYBOARDCODE=00-00");
-}
+}  
 //======SEND STRING============SEND STRING==========================
+// connectivity specific - This is for BT/BLE
 // Currently this is only for testing, it was temporarily added to MRESET
 //
 void sendString(String StringOut){
@@ -567,9 +578,10 @@ void sendString(String StringOut){
   ble.println(StringOut);
   sendRawKeyUp(); // just in case as there have been some odd key repeats happening.
 }  
+
 //======SEND MOUSE KEY=====SEND MOUSE KEY===========================
-// Currently this is only for testing, it was temporarily added to MRESET
-//
+// connectivity specific - This is for BT/BLE
+// 
 void sendMouseKey(String MouseKey){
     ble.print("AT+BleHidMouseButton=");
     ble.println(MouseKey);
@@ -577,6 +589,7 @@ void sendMouseKey(String MouseKey){
     ble.println("AT+BleHidMouseButton=0");
 }
 //======SEND CONTROL KEY============SEND CONTROL KEY==================
+// connectivity specific -  This is for BT/BLE
 // used in sendKey()
 //
 void sendControlKey(String cntrlName){
@@ -588,6 +601,7 @@ void sendControlKey(String cntrlName){
   ble.println(cntrlName);
 }
 //======GET AND SEND BATTERY LEVEL==================================
+// board specific this is for BLE feather
 // note needs #define VBATPIN A9 which is up top with other defines.
 void gAsBattLvl() {   
 float measuredvbat = analogRead(VBATPIN);
@@ -599,8 +613,8 @@ sendString( String(measuredvbat) );
 sendString(  "volts. " );
 }
 //======SEND FACTORY RESET============SEND FACTORY RESET===============
-// Currently this is only for testing, it was temporarily added to MRESET
-//
+//  board specific - This is for BLE feather
+// Factory Reset will clear the Bluetooth known hosts table
 void sendFactoryReset(){
   // Perform a factory reset to make sure everything is in a known state 
     if ( VERBOSE_MODE ) Serial.println(F("Performing a factory reset: "));
@@ -610,6 +624,7 @@ void sendFactoryReset(){
     }
 }
 //=====PROCESS READING==================PROCESS READING===============
+// ctb
 // used in loop()
 //
 // check if was pressing chord and now releasing, change to releasing,
@@ -634,6 +649,7 @@ void processReading(){
 }
 
 //========LOOP=========================LOOP==================
+// ctb
 void loop() {
   // Build the current key state.
   byte keyState = 0, mask = 1;
