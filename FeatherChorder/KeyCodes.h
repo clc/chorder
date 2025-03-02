@@ -182,6 +182,8 @@ enum keycodes {
   MACRO_SHIFTDN,        // try for shift down
   /* Some new macros for a few BT functions */
   BAT_LVL,  // print the batter level of the  LiPo
+  /* and last of all latch (I can't bring myself to call it "latchkey") */ 
+  LATCH,
   DIV_Last
 };
 

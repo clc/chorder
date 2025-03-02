@@ -45,7 +45,7 @@ const keymap_t keymap_default[128] = {
   ENUMKEY_ins,                      // --N I--P  0x19
   MOD_LGUI,                         // --N I-R-  0x1A
   MOD_LCTRL,                        // --N I-RP  0x1B
-  ENUMKEY_F9,                       // --N IM--  0x1C
+  LATCH,                       // --N IM--  0x1C
   MACRO_opencurly,                  // --N IM-P  0x1D
   ENUMKEY_ping,                     // --N IMR-  0x1E
   MODE_NUMLCK,                      // --N IMRP  0x1F
@@ -194,7 +194,7 @@ const keymap_t keymap_numsym[128] = {
   ENUMKEY_ins,                      // --N I--P  0x19
   MOD_LGUI,                         // --N I-R-  0x1A
   MOD_LCTRL,                        // --N I-RP  0x1B
-  ENUMKEY__,                        // --N IM--  0x1C
+  LATCH,                        // --N IM--  0x1C
   ENUMKEY__,                        // --N IM-P  0x1D
   ENUMKEY_ping,                     // --N IMR-  0x1E
   MODE_RESET,                       // --N IMRP  0x1F
@@ -343,7 +343,7 @@ const keymap_t keymap_function[128] = {
   ENUMKEY__,                        // --N I--P  0x19
   MOD_LGUI,                         // --N I-R-  0x1A
   MOD_LCTRL,                        // --N I-RP  0x1B
-  ENUMKEY__,                        // --N IM--  0x1C
+  LATCH,                        // --N IM--  0x1C
   ENUMKEY__,                        // --N IM-P  0x1D
   ENUMKEY__,                        // --N IMR-  0x1E
   ENUMKEY__,                        // --N IMRP  0x1F

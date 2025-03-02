@@ -1,4 +1,4 @@
- /*
+/*
  * Arduino code for a Bluetooth version of the Chorder.
  * @author: clc@clcworld.net
  * additional code by: priestdo@budgardr.org
@@ -23,7 +23,9 @@
  * - Added printed comment to device when doing a factory reset.
  * - Added 4 macros for the 4 unassigned chords in the default keyset
  * - Changed caps lock to be handled on the host rather than by the keyboard
- * Last mucked with on: 2025/02/28 04:09 UTC
+ * - Added mod key latching. If LATCH is pressed, any current modKeys are  sent
+ * - with each key until LATCH is pressed again.
+ *   Last mucked with on: 2025/03/02
  */
 
 #include <Arduino.h>
@@ -49,35 +51,35 @@
 #include "ChordMappings.h"
 
 /*=============================================================
-    APPLICATION SETTINGS
-
-    FACTORYRESET_ENABLE       Perform a factory reset when running this sketch
-   
-                              Enabling this will put your Bluefruit LE module
-                              in a 'known good' state and clear any config
-                              data set in previous sketches or projects, so
-                              running this at least once is a good idea.
-   
-                              When deploying your project, however, you will
-                              want to disable factory reset by setting this
-                              value to 0.  If you are making changes to your
-                              Bluefruit LE device via AT commands, and those
-                              changes aren't persisting across resets, this
-                              is the reason why.  Factory reset will erase
-                              the non-volatile memory where config data is
-                              stored, setting it back to factory default
-                              values.
-       
-                              Some sketches that require you to bond to a
-                              central device (HID mouse, keyboard, etc.)
-                              won't work at all with this feature enabled
-                              since the factory reset will clear all of the
-                              bonding data stored on the chip, meaning the
-                              central device won't be able to reconnect.
-    MINIMUM_FIRMWARE_VERSION  Minimum firmware version to have some new features
-    VERBOSE_MODE	      If set to 'true' enables debug output, 'false'
-    			      attempts to suppresses most serial output.
-    -----------------------------------------------------------------------*/
+	APPLICATION SETTINGS
+	
+	FACTORYRESET_ENABLE       Perform a factory reset when running this sketch
+	
+	Enabling this will put your Bluefruit LE module
+	in a 'known good' state and clear any config
+	data set in previous sketches or projects, so
+	running this at least once is a good idea.
+	
+	When deploying your project, however, you will
+	want to disable factory reset by setting this
+	value to 0.  If you are making changes to your
+	Bluefruit LE device via AT commands, and those
+	changes aren't persisting across resets, this
+	is the reason why.  Factory reset will erase
+	the non-volatile memory where config data is
+	stored, setting it back to factory default
+	values.
+	
+	Some sketches that require you to bond to a
+	central device (HID mouse, keyboard, etc.)
+	won't work at all with this feature enabled
+	since the factory reset will clear all of the
+	bonding data stored on the chip, meaning the
+	central device won't be able to reconnect.
+	MINIMUM_FIRMWARE_VERSION  Minimum firmware version to have some new features
+	VERBOSE_MODE	      If set to 'true' enables debug output, 'false'
+	attempts to suppresses most serial output.
+	-----------------------------------------------------------------------*/
 #define FACTORYRESET_ENABLE         0
 #define MINIMUM_FIRMWARE_VERSION    "0.6.6"
 #define VERBOSE_MODE                   true
@@ -89,10 +91,10 @@
 
 // Create the bluefruit object, either software serial...uncomment these lines
 /*
-SoftwareSerial bluefruitSS = SoftwareSerial(BLUEFRUIT_SWUART_TXD_PIN, BLUEFRUIT_SWUART_RXD_PIN);
-
-Adafruit_BluefruitLE_UART ble(bluefruitSS, BLUEFRUIT_UART_MODE_PIN,
-                      BLUEFRUIT_UART_CTS_PIN, BLUEFRUIT_UART_RTS_PIN);
+	SoftwareSerial bluefruitSS = SoftwareSerial(BLUEFRUIT_SWUART_TXD_PIN, BLUEFRUIT_SWUART_RXD_PIN);
+	
+	Adafruit_BluefruitLE_UART ble(bluefruitSS, BLUEFRUIT_UART_MODE_PIN,
+	BLUEFRUIT_UART_CTS_PIN, BLUEFRUIT_UART_RTS_PIN);
 */
 
 /* ...or hardware serial, which does not need the RTS/CTS pins. Uncomment this line */
@@ -116,12 +118,12 @@ void error(const __FlashStringHelper*err) {
 //=============================================================
 class Button {
   byte _pin;  // The button's I/O pin, as an Arduino pin number.
-  
-public:
-  Button(byte pin) : _pin(pin) {
+	
+ public:
+ Button(byte pin) : _pin(pin) {
     pinMode(pin, INPUT_PULLUP);      // Make pin an input and activate pullup.
   }
-  
+	
   bool isDown() const {
     // TODO: this assumes we're using analog pins!
     //return analogRead(_pin) < 0x100;
@@ -166,74 +168,74 @@ const int InterstitialDelay = 50; // for a 5/100 sec. delay (4/100 was not enoug
 void setup(void)
 {
   // Ensure software power reset pin in high
-   pinMode(EnPin, OUTPUT);      // Make pin an output,
-   digitalWrite(EnPin, HIGH);  // and activate pullup.
-   // while (!Serial);  // Required for Flora & Micro (and usb output)
+	pinMode(EnPin, OUTPUT);      // Make pin an output,
+	digitalWrite(EnPin, HIGH);  // and activate pullup.
+	// while (!Serial);  // Required for Flora & Micro (and usb output)
   delay(HalfSec);
-
+	
   if ( VERBOSE_MODE ) Serial.begin(115200);
   if ( VERBOSE_MODE ) Serial.println(F("Adafruit Bluefruit HID Chorder"));
   if ( VERBOSE_MODE ) Serial.println(F("---------------------------------------"));
-
+	
   /* Initialise the module */
   if ( VERBOSE_MODE ) Serial.print(F("Initialising the Bluefruit LE module: "));
-
+	
   if ( !ble.begin(VERBOSE_MODE) )
-  {
-    error(F("Couldn't find Bluefruit, make sure it's in CoMmanD mode & check wiring?"));
-  }
+		{
+			error(F("Couldn't find Bluefruit, make sure it's in CoMmanD mode & check wiring?"));
+		}
   if ( VERBOSE_MODE ) Serial.println( F("OK!") );
-
+	
   if ( FACTORYRESET_ENABLE )
-  {
-
-/* Perform a factory reset to make sure everything is in a known state */
-    if ( VERBOSE_MODE ) Serial.println(F("Performing a factory reset: "));
-    if ( ! ble.factoryReset() ){
-      error(F("Factory reset failed!"));
-    }
-  }
-
+		{
+			
+			/* Perform a factory reset to make sure everything is in a known state */
+			if ( VERBOSE_MODE ) Serial.println(F("Performing a factory reset: "));
+			if ( ! ble.factoryReset() ){
+				error(F("Factory reset failed!"));
+			}
+		}
+	
   /* Disable command echo from Bluefruit */
   ble.echo(false);
-
+	
   if ( VERBOSE_MODE ) Serial.println("Requesting Bluefruit info:");
   /* Print Bluefruit information */
   if ( VERBOSE_MODE )  ble.info();
-
+	
   /* Change the device name to make it easier to find */
   if ( VERBOSE_MODE ) Serial.println(F("Setting device name to " DEVICENAME ": "));
   if (! ble.sendCommandCheckOK(F( "AT+GAPDEVNAME="DEVICENAME )) ) {
     error(F("Could not set device name?"));
   }
-
-// GPD 2025-02-09 replaced this section with section from latest hid keyboiard example
-
+	
+	// GPD 2025-02-09 replaced this section with section from latest hid keyboiard example
+	
   /* Enable HID Service */
   if ( VERBOSE_MODE ) Serial.println(F("Enable HID Service (including Keyboard): "));
   if ( ble.isVersionAtLeast(MINIMUM_FIRMWARE_VERSION) )
-  {
-    if ( !ble.sendCommandCheckOK(F( "AT+BleHIDEn=On" ))) {
-      error(F("Could not enable Keyboard"));
-    }
-  }else
-  {
-    if (! ble.sendCommandCheckOK(F( "AT+BleKeyboardEn=On"  ))) {
-      error(F("Could not enable Keyboard"));
-    }
-  }
-
+		{
+			if ( !ble.sendCommandCheckOK(F( "AT+BleHIDEn=On" ))) {
+				error(F("Could not enable Keyboard"));
+			}
+		}else
+		{
+			if (! ble.sendCommandCheckOK(F( "AT+BleKeyboardEn=On"  ))) {
+				error(F("Could not enable Keyboard"));
+			}
+		}
+	
   /* Add or remove service requires a reset */
   if ( VERBOSE_MODE ) Serial.println(F("Performing a SW reset (service changes require a reset): "));
   if (! ble.reset() ) {
     error(F("Couldn't reset??"));
   }
-
-// GPD end of replaced section
-
-
+	
+	// GPD end of replaced section
+	
+	
   String stringOne =  String(0x45, HEX);
-  
+	
   if ( VERBOSE_MODE ) Serial.println(stringOne);
 }
 
@@ -256,7 +258,8 @@ enum Mode {
 };
 
 bool isNumsymLocked = false;
-keymap_t modKeys = 0x00;
+keymap_t latchMods = 0x00;  // currently latched modKeys
+keymap_t modKeys = 0x00;  // current modifyers ( L/Rshift,L/Ralt, L/Rctrl, L/Rgui )
 
 Mode mode = ALPHA;
 
@@ -265,7 +268,14 @@ byte previousStableReading = 0;
 byte currentStableReading = 0;
 long lastDebounceTime = 0;  // the last time the output pin was toggled
 long debounceDelay = 10;    // the debounce time; increase if the output flickers
-
+//=====RESET=====================RESET==========================
+void reset(){
+	mode = ALPHA;
+	latchMods=0x00;
+	modKeys = 0x00;
+	isNumsymLocked = false;
+	sendRawKeyUp();
+}
 //=====SEND KEY====================SEND KEY========================
 // used by processReading()
 // ctb
@@ -279,10 +289,17 @@ void sendKey(byte keyState){
   } else {
     theKey = keymap_function[keyState];
   }
-
+	
   switch (theKey)  {
-  // Handle mode switching - return immediately after the mode has changed
-  // Handle basic mode switching
+		// Handle mode switching - return immediately after the mode has changed
+		// Handle basic mode switching
+  case LATCH:
+		if ( latchMods == 0x00 ) {  // latch was not set, so set it  current modKeys 
+			latchMods = modKeys;
+		} else {
+      latchMods = 0x00;   // latch was set, so clear it.   
+		}
+		return;
   case MODE_NUM:
     if (mode == NUMSYM) {
       mode = ALPHA;
@@ -298,31 +315,24 @@ void sendKey(byte keyState){
     }
     return;
   case MODE_RESET:
-    mode = ALPHA;
-    modKeys = 0x00;
-    isNumsymLocked = false;
-    sendRawKeyUp();
+		reset();
     return;
   case MODE_MRESET:
-    mode = ALPHA;
-    modKeys = 0x00;
-    isNumsymLocked = false;
+		reset();
     digitalWrite(EnPin, LOW);  // turn off 3.3v regulator enable.
     return;
-// something with a battery only		
- case BAT_LVL:
- // get and send the battedy level, then
- // do a mode_reset
+		// something with a battery only		
+	case BAT_LVL:
+		// get and send the battedy level, then
+		// do a mode_reset
     gAsBattLvl();
-    mode = ALPHA;
-    modKeys = 0x00;
-    isNumsymLocked = false;
+		reset();
     return;
- case MODE_FRESET:
+	case MODE_FRESET:
     sendFactoryReset();
     return;
-		// back to common code		
-// Handle mode locks
+		// back to common code
+		// Handle mode locks
   case MODE_NUMLCK:
     if (isNumsymLocked){
       isNumsymLocked = false;
@@ -332,7 +342,7 @@ void sendKey(byte keyState){
       mode = NUMSYM;
     }
     return;
- // Handle modifier keys toggling
+		// Handle modifier keys toggling
   case MOD_LCTRL:
     modKeys = modKeys ^ 0x01;
     return;
@@ -357,7 +367,7 @@ void sendKey(byte keyState){
   case MOD_RGUI:
     modKeys = modKeys ^ 0x80;
     return;
- // Handle special keys
+		// Handle special keys
   case MULTI_NumShift:
     if (mode == NUMSYM) {
       mode = ALPHA;
@@ -370,8 +380,8 @@ void sendKey(byte keyState){
     modKeys = modKeys ^ 0x01;
     modKeys = modKeys ^ 0x04;
     return;
-/* Everything after this sends actual keys to the system; break rather than
-     return since we want to reset the modifiers after these keys are sent. */
+		/* Everything after this sends actual keys to the system; break rather than
+ 			 return since we want to reset the modifiers after these keys are sent. */
   case MACRO_000:
 	  sendRawKey(0x00, ENUMKEY_0);
     sendRawKey(0x00, ENUMKEY_0);
@@ -426,52 +436,52 @@ void sendKey(byte keyState){
     sendRawKey(0x02, 0x30);
     break;
   case MACRO_1 :
-			// er
-      sendRawKey(modKeys, ENUMKEY_E);
-      delay(InterstitialDelay);
-      sendRawKey(modKeys, ENUMKEY_R);
-      break;
-    case MACRO_2:
-			// th
-      sendRawKey(modKeys, ENUMKEY_T);
-      delay(InterstitialDelay);
-      sendRawKey(modKeys, ENUMKEY_H);
-      break;
-    case MACRO_3:
-			// an
-      sendRawKey(modKeys, ENUMKEY_A);
-      delay(InterstitialDelay);
-      sendRawKey(modKeys, ENUMKEY_N);
-      break;
-    case MACRO_4:
- 			// in
-      sendRawKey(modKeys, ENUMKEY_I);
-      delay(InterstitialDelay);
-      sendRawKey(modKeys, ENUMKEY_N);
-      break;
-  // macro test is a long string to confirm length of interstitial delay
+		// er
+		sendRawKey(modKeys, ENUMKEY_E);
+		delay(InterstitialDelay);
+		sendRawKey(modKeys, ENUMKEY_R);
+		break;
+	case MACRO_2:
+		// th
+		sendRawKey(modKeys, ENUMKEY_T);
+		delay(InterstitialDelay);
+		sendRawKey(modKeys, ENUMKEY_H);
+		break;
+	case MACRO_3:
+		// an
+		sendRawKey(modKeys, ENUMKEY_A);
+		delay(InterstitialDelay);
+		sendRawKey(modKeys, ENUMKEY_N);
+		break;
+	case MACRO_4:
+		// in
+		sendRawKey(modKeys, ENUMKEY_I);
+		delay(InterstitialDelay);
+		sendRawKey(modKeys, ENUMKEY_N);
+		break;
+		// macro test is a long string to confirm length of interstitial delay
 	case MACRO_TEST:
-      sendRawKey (modKeys, ENUMKEY_A);
-      delay(InterstitialDelay);
-      sendRawKey (modKeys, ENUMKEY_B);
-      delay(InterstitialDelay);
-      sendRawKey (modKeys, ENUMKEY_C);
-      delay(InterstitialDelay);
-      sendRawKey (modKeys, ENUMKEY_D);
-      delay(InterstitialDelay);
-      sendRawKey (modKeys, ENUMKEY_E);
-      delay(InterstitialDelay);
-      sendRawKey (modKeys, ENUMKEY_F);
-      delay(InterstitialDelay);
-      sendRawKey (modKeys, ENUMKEY_G);
-      delay(InterstitialDelay);
-      sendRawKey (modKeys, ENUMKEY_H);
-      break;
-   case MACRO_SHIFTDN:
-        modKeys = MOD_LSHIFT;
+		sendRawKey (modKeys, ENUMKEY_A);
+		delay(InterstitialDelay);
+		sendRawKey (modKeys, ENUMKEY_B);
+		delay(InterstitialDelay);
+		sendRawKey (modKeys, ENUMKEY_C);
+		delay(InterstitialDelay);
+		sendRawKey (modKeys, ENUMKEY_D);
+		delay(InterstitialDelay);
+		sendRawKey (modKeys, ENUMKEY_E);
+		delay(InterstitialDelay);
+		sendRawKey (modKeys, ENUMKEY_F);
+		delay(InterstitialDelay);
+		sendRawKey (modKeys, ENUMKEY_G);
+		delay(InterstitialDelay);
+		sendRawKey (modKeys, ENUMKEY_H);
+		break;
+	case MACRO_SHIFTDN:
+		modKeys = MOD_LSHIFT;
    	sendRawKeyDn (MOD_LSHIFT, 0x00);
-	break;
-	// Handle Android specific keys
+		break;
+		// Handle Android specific keys
   case ANDROID_search:
     sendRawKey(0x04, 0x2C);
     break;
@@ -505,16 +515,16 @@ void sendKey(byte keyState){
   case MEDIA_voldn:
     sendControlKey("VOLUME-,500");
     break;
-// Send the key
+		// Send the key
   default:
     sendRawKey(modKeys, theKey);
     break;
   }
-
-  modKeys = 0x00;
+	
+  modKeys = latchMods; //sets modKeys to any currently latched mods, or 0x00 if none
   mode = ALPHA;
-// Reset the modKeys and mode based on
- if (isNumsymLocked){
+	// Reset the modKeys and mode based on
+	if (isNumsymLocked){
     mode = NUMSYM;
   }
 }
@@ -530,8 +540,8 @@ void sendKey(byte keyState){
 
 
 void sendRawKey(char modKey, char rawKey){
-     sendRawKeyDn(modKey, rawKey);
-     sendRawKeyUp();
+	sendRawKeyDn(modKey, rawKey);
+	sendRawKeyUp();
 }
 
 //======SEND RAW KEY DOWN===============SEND RAW KEY DOWN============
@@ -540,22 +550,22 @@ void sendRawKey(char modKey, char rawKey){
 //
 
 void sendRawKeyDn(char modKey, char rawKey){
-    // Format for Bluefruit Feather is MOD-00-KEY.
-    // Plan: use print to only print the last 2 ch so that we get 2 char
-    // String keys = String(modKey, HEX) + "-00-" + String(rawKey, HEX);
-    
-
-// pad & trim modKey to ensure 2 digit hexidecimal is sent
-    String tmpModKey = "00" + String(modKey, HEX);
-    int modKeyLen = tmpModKey.length() - 2;
-// pad & trim rawKey to ensure 2 digit hexidecimal is sent
-    String tmpRawKey = "00" + String(rawKey, HEX);
-    int rawKeyLen = tmpRawKey.length() - 2;
-
-    ble.print("AT+BLEKEYBOARDCODE=");
-    ble.println(String(&tmpModKey[modKeyLen]) + "-00-" + String(&tmpRawKey[rawKeyLen]));
-
-
+	// Format for Bluefruit Feather is MOD-00-KEY.
+	// Plan: use print to only print the last 2 ch so that we get 2 char
+	// String keys = String(modKey, HEX) + "-00-" + String(rawKey, HEX);
+	
+	
+	// pad & trim modKey to ensure 2 digit hexidecimal is sent
+	String tmpModKey = "00" + String(modKey, HEX);
+	int modKeyLen = tmpModKey.length() - 2;
+	// pad & trim rawKey to ensure 2 digit hexidecimal is sent
+	String tmpRawKey = "00" + String(rawKey, HEX);
+	int rawKeyLen = tmpRawKey.length() - 2;
+	
+	ble.print("AT+BLEKEYBOARDCODE=");
+	ble.println(String(&tmpModKey[modKeyLen]) + "-00-" + String(&tmpRawKey[rawKeyLen]));
+	
+	
 }
 
 //======SEND RAW KEY UP==============SEND RAW KEY UP==================
@@ -563,7 +573,7 @@ void sendRawKeyDn(char modKey, char rawKey){
 // used in sendRawKey()  and sendString()
 //
 void sendRawKeyUp(){
-   ble.println("AT+BLEKEYBOARDCODE=00-00");
+	ble.println("AT+BLEKEYBOARDCODE=00-00");
 }  
 //======SEND STRING============SEND STRING==========================
 // connectivity specific - This is for BT/BLE
@@ -580,10 +590,10 @@ void sendString(String StringOut){
 // connectivity specific - This is for BT/BLE
 // 
 void sendMouseKey(String MouseKey){
-    ble.print("AT+BleHidMouseButton=");
-    ble.println(MouseKey);
-    delay(HalfSec);
-    ble.println("AT+BleHidMouseButton=0");
+	ble.print("AT+BleHidMouseButton=");
+	ble.println(MouseKey);
+	delay(HalfSec);
+	ble.println("AT+BleHidMouseButton=0");
 }
 //======SEND CONTROL KEY============SEND CONTROL KEY==================
 // connectivity specific -  This is for BT/BLE
@@ -601,13 +611,13 @@ void sendControlKey(String cntrlName){
 // board specific this is for BLE feather
 // note needs #define VBATPIN A9 which is up top with other defines.
 void gAsBattLvl() {   
-float measuredvbat = analogRead(VBATPIN);
-measuredvbat *= 2;    // we divided by 2, so multiply back
-measuredvbat *= 3.3;  // Multiply by 3.3V, our reference voltage
-measuredvbat /= 1024; // convert to voltage
-sendString( " Kbd Batt: " );
-sendString( String(measuredvbat) );
-sendString(  "volts. " );
+	float measuredvbat = analogRead(VBATPIN);
+	measuredvbat *= 2;    // we divided by 2, so multiply back
+	measuredvbat *= 3.3;  // Multiply by 3.3V, our reference voltage
+	measuredvbat /= 1024; // convert to voltage
+	sendString( " Kbd Batt: " );
+	sendString( String(measuredvbat) );
+	sendString(  "volts. " );
 }
 //======SEND FACTORY RESET============SEND FACTORY RESET===============
 //  board specific - This is for BLE feather
@@ -615,10 +625,10 @@ sendString(  "volts. " );
 void sendFactoryReset(){
   // Perform a factory reset to make sure everything is in a known state 
     if ( VERBOSE_MODE ) Serial.println(F("Performing a factory reset: "));
-    sendString( " Performing Factory Reset, You will need to pair the device after..."); 
-    if ( ! ble.factoryReset() ){
-      error(F("Factory reset failed!"));
-    }
+	sendString( " Performing Factory Reset, You will need to pair the device after..."); 
+	if ( ! ble.factoryReset() ){
+		error(F("Factory reset failed!"));
+	}
 }
 //=====PROCESS READING==================PROCESS READING===============
 // ctb
@@ -629,20 +639,20 @@ void sendFactoryReset(){
 //         if chord was not pressing and now is, change to pressing
 //
 void processReading(){
-    switch (state) {
-    case PRESSING:
-      if (previousStableReading & ~currentStableReading) {
-        state = RELEASING;
-        sendKey(previousStableReading);
-      } 
-      break;
-
-    case RELEASING:
-      if (currentStableReading & ~previousStableReading) {
-        state = PRESSING;
-      }
-      break;
-    }
+	switch (state) {
+	case PRESSING:
+		if (previousStableReading & ~currentStableReading) {
+			state = RELEASING;
+			sendKey(previousStableReading);
+		} 
+		break;
+		
+	case RELEASING:
+		if (currentStableReading & ~previousStableReading) {
+			state = PRESSING;
+		}
+		break;
+	}
 }
 
 //========LOOP=========================LOOP==================
@@ -654,22 +664,21 @@ void loop() {
     if (switch_pins[i].isDown()) keyState |= mask;
     mask <<= 1;
   }
-
+	
   if (lastKeyState != keyState) {
     lastDebounceTime = millis();
   }
-
+	
   if ((millis() - lastDebounceTime) > debounceDelay) {
     // whatever the reading is at, it's been there for longer
     // than the debounce delay, so take it as the actual current state:
     currentStableReading = keyState;
   }
-
+	
   if (previousStableReading != currentStableReading) {
     processReading();
     previousStableReading = currentStableReading;
   }
-
+	
   lastKeyState = keyState;
 }
- 
