@@ -24,7 +24,14 @@
  * - Added 4 macros for the 4 unassigned chords in the default keyset
  * - Changed caps lock to be handled on the host rather than by the keyboard
  * - Added mod key latching. If LATCH is pressed, any current modKeys are  sent
- * - with each key until LATCH is pressed again.
+ *   with each key until LATCH is pressed again.
+ * - Added / changed the 4 default keys not part of
+ *   the default key map.  --- -M-P, --- IM-P,
+ *   -C- -M-P, -C- IM-P.  as, er, th, an, in.  
+ *   The behavior for these is that latched mods and
+ *   caps lock will affect both letters, but other modifyers 
+ *   like shift, will only affect the first letter.
+ *
  *   Last mucked with on: 2025/03/02
  */
 
@@ -439,25 +446,25 @@ void sendKey(byte keyState){
 		// er
 		sendRawKey(modKeys, ENUMKEY_E);
 		delay(InterstitialDelay);
-		sendRawKey(modKeys, ENUMKEY_R);
+		sendRawKey(latchMods, ENUMKEY_R);
 		break;
 	case MACRO_2:
 		// th
 		sendRawKey(modKeys, ENUMKEY_T);
 		delay(InterstitialDelay);
-		sendRawKey(modKeys, ENUMKEY_H);
+		sendRawKey(latchMods, ENUMKEY_H);
 		break;
 	case MACRO_3:
 		// an
 		sendRawKey(modKeys, ENUMKEY_A);
 		delay(InterstitialDelay);
-		sendRawKey(modKeys, ENUMKEY_N);
+		sendRawKey(latchMods, ENUMKEY_N);
 		break;
 	case MACRO_4:
 		// in
 		sendRawKey(modKeys, ENUMKEY_I);
 		delay(InterstitialDelay);
-		sendRawKey(modKeys, ENUMKEY_N);
+		sendRawKey(latchMods, ENUMKEY_N);
 		break;
 		// macro test is a long string to confirm length of interstitial delay
 	case MACRO_TEST:
