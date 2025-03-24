@@ -306,7 +306,7 @@ void sendKey(byte keyState){
 		} else {
       latchMods = 0x00;   // latch was set, so clear it.   
 		}
-		return;
+		break;
   case MODE_NUM:
     if (mode == NUMSYM) {
       mode = ALPHA;
