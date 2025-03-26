@@ -31,8 +31,11 @@
  *   The behavior for these is that latched mods and
  *   caps lock will affect both letters, but other modifyers 
  *   like shift, will only affect the first letter.
- *
- *   Last mucked with on: 2025/03/02
+ * - Corrected latch mod so it no longer sends the after it is toggled off with
+ *   the latched mods.
+ * - Corrected the way the shiftdn macro worked.  
+ *   
+ *   Last mucked with on: 2025/03/26
  */
 
 #include <Arduino.h>
@@ -486,7 +489,7 @@ void sendKey(byte keyState){
 		break;
 	case MACRO_SHIFTDN:
 		modKeys = MOD_LSHIFT;
-   	sendRawKeyDn (MOD_LSHIFT, 0x00);
+   	sendRawKeyDn (0x02, 0x00);
 		break;
 		// Handle Android specific keys
   case ANDROID_search:
